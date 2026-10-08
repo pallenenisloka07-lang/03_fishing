@@ -1,10 +1,9 @@
 """
 Fishing Game
 
-Run with: python main.py
-
 Controls:
-    SPACE - Cast the hook
+SPACE - Cast
+R - Restart after time is up
 """
 
 import pygame
@@ -33,8 +32,13 @@ def main():
                 running = False
 
             elif event.type == pygame.KEYDOWN:
+
                 if event.key == pygame.K_SPACE:
                     engine.start_cast()
+
+                elif event.key == pygame.K_r:
+                    if engine.game_over:
+                        engine.restart()
 
         engine.update()
         engine.draw(screen, font)

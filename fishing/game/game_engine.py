@@ -1,17 +1,22 @@
 """
-GameEngine: owns the hook and the fish, and runs one frame's worth of
-game logic.
+GameEngine: owns the hook and the fish and runs the game logic.
 
-Task 2: supports multiple fish types with different speeds,
-point values, sizes, and colors.
-
-Task 3: casting is controlled by the player.
+Tasks completed:
+Task 1 - Correct catch detection
+Task 2 - Multiple fish types
+Task 3 - Player-controlled casting
+Task 4 - 30-second round timer
 """
+
+import time
 
 from game.hook import Hook, IDLE
 from game.fish import Fish
 from game.catch import check_catch
 from game.renderer import WIDTH, HEIGHT, SURFACE_Y, MAX_DEPTH_Y
+
+
+ROUND_DURATION = 30
 
 
 class GameEngine:
@@ -23,57 +28,40 @@ class GameEngine:
             speed=5
         )
 
-        # Multiple fish types:
-        # Blue fish = slower, smaller, 10 points
-        # Orange fish = faster, larger, 25 points
         self.fish_list = [
-            Fish(
-                x=100,
-                y=180,
-                speed=1.5,
-                width=36,
-                height=18,
-                point_value=10,
-                color=(80, 180, 220)
-            ),
-            Fish(
-                x=400,
-                y=280,
-                speed=-4,
-                width=46,
-                height=22,
-                point_value=25,
-                color=(240, 170, 60)
-            ),
-            Fish(
-                x=250,
-                y=380,
-                speed=1.5,
-                width=36,
-                height=18,
-                point_value=10,
-                color=(80, 180, 220)
-            ),
-            Fish(
-                x=550,
-                y=340,
-                speed=-4,
-                width=46,
-                height=22,
-                point_value=25,
-                color=(240, 170, 60)
-            ),
+            Fish(100, 180, 1.5, 36, 18, 10, (80, 180, 220)),
+            Fish(400, 280, -4, 46, 22, 25, (240, 170, 60)),
+            Fish(250, 380, 1.5, 36, 18, 10, (80, 180, 220)),
+            Fish(550, 340, -4, 46, 22, 25, (240, 170, 60)),
         ]
 
         self.hooked_fish = None
         self.score = 0
+        self.start_time = time.time()
+        self.game_over = False
 
     def start_cast(self):
-        """Start a cast only if the hook is currently idle."""
-        if self.hook.state == IDLE:
+        if not self.game_over and self.hook.state == IDLE:
             self.hook.start_cast()
 
+    def restart(self):
+        self.__init__()
+
+    def get_time_left(self):
+        elapsed = time.time() - self.start_time
+        return max(0, ROUND_DURATION - int(elapsed))
+
     def update(self):
+        if self.game_over:
+            return
+
+        # Check timer
+        if self.get_time_left() <= 0:
+            self.game_over = True
+            self.hook.state = IDLE
+            self.hooked_fish = None
+            return
+
         self.hook.update()
 
         for fish in self.fish_list:
@@ -93,10 +81,8 @@ class GameEngine:
             if caught is not None:
                 self.fish_list.remove(caught)
                 self.hooked_fish = caught
-
                 self.hooked_fish.x = self.hook.x
                 self.hooked_fish.y = self.hook.y
-
                 self.hook.catch_fish()
 
     def draw(self, surface, font):
@@ -119,3 +105,18 @@ class GameEngine:
             f"Score: {self.score}",
             (10, 10)
         )
+
+        renderer.draw_text(
+            surface,
+            font,
+            f"Time: {self.get_time_left()}",
+            (10, 40)
+        )
+
+        if self.game_over:
+            renderer.draw_text(
+                surface,
+                font,
+                "TIME UP! Press R to restart",
+                (WIDTH // 2 - 150, HEIGHT // 2)
+            )
