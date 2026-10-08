@@ -4,6 +4,8 @@ game logic.
 
 Task 2: supports multiple fish types with different speeds,
 point values, sizes, and colors.
+
+Task 3: casting is controlled by the player.
 """
 
 from game.hook import Hook, IDLE
@@ -66,10 +68,12 @@ class GameEngine:
         self.hooked_fish = None
         self.score = 0
 
-    def update(self):
+    def start_cast(self):
+        """Start a cast only if the hook is currently idle."""
         if self.hook.state == IDLE:
             self.hook.start_cast()
 
+    def update(self):
         self.hook.update()
 
         for fish in self.fish_list:
@@ -89,8 +93,10 @@ class GameEngine:
             if caught is not None:
                 self.fish_list.remove(caught)
                 self.hooked_fish = caught
+
                 self.hooked_fish.x = self.hook.x
                 self.hooked_fish.y = self.hook.y
+
                 self.hook.catch_fish()
 
     def draw(self, surface, font):
@@ -113,4 +119,3 @@ class GameEngine:
             f"Score: {self.score}",
             (10, 10)
         )
-        
